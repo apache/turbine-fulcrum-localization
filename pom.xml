@@ -41,9 +41,9 @@
   </distributionManagement>
 
   <scm>
-    <connection>scm:svn:http://svn.apache.org/repos/asf/turbine/fulcrum/trunk/localization/</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/turbine/fulcrum/trunk/localization/</developerConnection>
-    <url>http://svn.apache.org/viewvc/turbine/fulcrum/trunk/localization/</url>
+    <connection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</connection>
+    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</developerConnection>
+    <url>https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</url>
   </scm>
 
   <developers>
