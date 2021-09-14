@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LocaleTokenizer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fulcrum Localization</a> &gt; <a href="index.source.html" class="el_package">org.apache.fulcrum.localization</a> &gt; <span class="el_source">LocaleTokenizer.java</span></div><h1>LocaleTokenizer.java</h1><pre class="source lang-java linenums">package org.apache.fulcrum.localization;
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
+
+/**
+ * Parses the HTTP &lt;code&gt;Accept-Language&lt;/code&gt; header as per section
+ * 14.4 of RFC 2068 (HTTP 1.1 header field definitions).
+ *
+ * @author &lt;a href=&quot;mailto:dlr@collab.net&quot;&gt;Daniel Rall&lt;/a&gt;
+ * @version $Id$
+ */
+public class LocaleTokenizer
+    implements Iterator&lt;Object&gt;
+{
+    /**
+     * Separates elements of the &lt;code&gt;Accept-Language&lt;/code&gt; HTTP
+     * header.
+     */
+    private static final String LOCALE_SEPARATOR = &quot;,&quot;;
+
+    /**
+     * Separates locale from quality within elements.
+     */
+    private static final char QUALITY_SEPARATOR = ';';
+
+    /**
+     * The default quality value for an &lt;code&gt;AcceptLanguage&lt;/code&gt;
+     * object.
+     */
+<span class="fc" id="L55">    protected static final Float DEFAULT_QUALITY = new Float(1.0f);</span>
+
+    /**
+     * The parsed locales.
+     */
+<span class="fc" id="L60">    private ArrayList&lt;AcceptLanguage&gt; locales = new ArrayList&lt;AcceptLanguage&gt;(3);</span>
+
+    /**
+     * Parses the &lt;code&gt;Accept-Language&lt;/code&gt; header.
+     *
+     * @param header The &lt;code&gt;Accept-Language&lt;/code&gt; header
+     * (i.e. &lt;code&gt;en, es;q=0.8, zh-TW;q=0.1&lt;/code&gt;).
+     */
+    public LocaleTokenizer(String header)
+<span class="fc" id="L69">    {</span>
+<span class="fc" id="L70">        StringTokenizer tok = new StringTokenizer(header, LOCALE_SEPARATOR);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        while (tok.hasMoreTokens())</span>
+        {
+<span class="fc" id="L73">            AcceptLanguage acceptLang = new AcceptLanguage();</span>
+<span class="fc" id="L74">            String element = tok.nextToken().trim();</span>
+            int index;
+
+            // Record and cut off any quality value that comes after a
+            // semi-colon.
+<span class="fc bfc" id="L79" title="All 2 branches covered.">            if ( (index = element.indexOf(QUALITY_SEPARATOR)) != -1 )</span>
+            {
+<span class="fc" id="L81">                String q = element.substring(index);</span>
+<span class="fc" id="L82">                element = element.substring(0, index);</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">                if ( (index = q.indexOf('=')) != -1 )</span>
+                {
+                    try
+                    {
+<span class="fc" id="L87">                        acceptLang.quality =</span>
+<span class="fc" id="L88">                            Float.valueOf(q.substring(index + 1));</span>
+                    }
+<span class="nc" id="L90">                    catch (NumberFormatException useDefault)</span>
+                    {
+                        // ignore
+<span class="fc" id="L93">                    }</span>
+                }
+            }
+
+<span class="fc" id="L97">            element = element.trim();</span>
+
+            // Create a Locale from the language.  A dash may separate the
+            // language from the country.
+<span class="fc bfc" id="L101" title="All 2 branches covered.">            if ( (index = element.indexOf('-')) == -1 )</span>
+            {
+                // No dash means no country.
+<span class="fc" id="L104">                acceptLang.locale = new Locale(element, &quot;&quot;);</span>
+            }
+            else
+            {
+<span class="fc" id="L108">                acceptLang.locale = new Locale(element.substring(0, index),</span>
+<span class="fc" id="L109">                                               element.substring(index + 1));</span>
+            }
+
+<span class="fc" id="L112">            locales.add(acceptLang);</span>
+<span class="fc" id="L113">        }</span>
+
+        // Sort by quality in descending order.
+<span class="fc" id="L116">        Collections.sort(locales, Collections.reverseOrder());</span>
+<span class="fc" id="L117">    }</span>
+
+    /**
+     * @return Whether there are more locales.
+     */
+    public boolean hasNext()
+    {
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        return !locales.isEmpty();</span>
+    }
+
+    /**
+     * Creates a &lt;code&gt;Locale&lt;/code&gt; from the next element of the
+     * &lt;code&gt;Accept-Language&lt;/code&gt; header.
+     *
+     * @return The next highest-rated &lt;code&gt;Locale&lt;/code&gt;.
+     * @throws NoSuchElementException No more locales.
+     */
+    public Object next()
+    {
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (locales.isEmpty())</span>
+        {
+<span class="nc" id="L138">            throw new NoSuchElementException();</span>
+        }
+<span class="fc" id="L140">        return ((AcceptLanguage) locales.remove(0)).locale;</span>
+    }
+
+    /**
+     * Not implemented.
+     */
+    public final void remove()
+    {
+<span class="nc" id="L148">        throw new UnsupportedOperationException(getClass().getName() +</span>
+                                                &quot; does not support remove()&quot;);
+    }
+
+    /**
+     * Struct representing an element of the HTTP
+     * &lt;code&gt;Accept-Language&lt;/code&gt; header.
+     */
+<span class="fc" id="L156">    protected static class AcceptLanguage implements Comparable&lt;Object&gt;</span>
+    {
+        /**
+         * The language and country.
+         */
+        Locale locale;
+
+        /**
+         * The quality of our locale (as values approach
+         * &lt;code&gt;1.0&lt;/code&gt;, they indicate increased user preference).
+         */
+<span class="fc" id="L167">        Float quality = DEFAULT_QUALITY;</span>
+        
+		@Override
+        public int compareTo(Object acceptLang)
+        {
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">			if ( acceptLang == null )</span>
+<span class="nc" id="L173">				throw new NullPointerException(&quot;AcceptLanguage not found&quot;);</span>
+			
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">			if ( acceptLang instanceof AcceptLanguage )</span>
+			{
+<span class="fc" id="L177">				Float q2 = ((AcceptLanguage) acceptLang).quality;</span>
+<span class="fc" id="L178">				return quality.compareTo( q2 );</span>
+			} else {
+<span class="nc" id="L180">				throw new NullPointerException(&quot;The object to compare is not the correct type&quot;);</span>
+			}
+				
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

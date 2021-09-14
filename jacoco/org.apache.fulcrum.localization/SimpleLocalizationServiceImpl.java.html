@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SimpleLocalizationServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fulcrum Localization</a> &gt; <a href="index.source.html" class="el_package">org.apache.fulcrum.localization</a> &gt; <span class="el_source">SimpleLocalizationServiceImpl.java</span></div><h1>SimpleLocalizationServiceImpl.java</h1><pre class="source lang-java linenums">package org.apache.fulcrum.localization;
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+
+import org.apache.avalon.framework.activity.Initializable;
+import org.apache.avalon.framework.configuration.Configurable;
+import org.apache.avalon.framework.configuration.Configuration;
+import org.apache.avalon.framework.configuration.ConfigurationException;
+import org.apache.avalon.framework.logger.AbstractLogEnabled;
+import org.apache.commons.lang3.StringUtils;
+
+/**
+ * &lt;p&gt;
+ * This class is the single point of access to all localization
+ * resources.  It caches different ResourceBundles for different
+ * Locales.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;Usage example:&lt;/p&gt;
+ *
+ * &lt;pre&gt;
+ * &lt;code&gt;
+ * SimpleLocalizationService ls = (SimpleLocalizationService) TurbineServices
+ *     .getInstance().getService(SimpleLocalizationService.SERVICE_NAME);
+ * &lt;/code&gt;
+ * &lt;/pre&gt;
+ *
+ * &lt;p&gt;
+ * Then call {@link #getString(String, Locale, String)}, or one of
+ * two methods to retrieve a ResourceBundle:
+ * &lt;/p&gt;
+ *
+ * &lt;ul&gt;
+ * &lt;li&gt;getBundle(&quot;MyBundleName&quot;)&lt;/li&gt;
+ * &lt;li&gt;getBundle(&quot;MyBundleName&quot;, Locale)&lt;/li&gt;
+ * &lt;li&gt;etc.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * @author &lt;a href=&quot;mailto:jm@mediaphil.de&quot;&gt;Jonas Maurus&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:jon@latchkey.com&quot;&gt;Jon S. Stevens&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:novalidemail@foo.com&quot;&gt;Frank Y. Kim&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:dlr@finemaltcoding.com&quot;&gt;Daniel Rall&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:leonardr@collab.net&quot;&gt;Leonard Richardson&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:mcconnell@apache.org&quot;&gt;Stephen McConnell&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:tv@apache.org&quot;&gt;Thomas Vandahl&lt;/a&gt;
+ * @version $Id: DefaultLocalizationService.java 535465 2007-05-05 06:58:06Z tv $
+ * 
+ * avalon.component name=&quot;localization&quot; lifestyle=&quot;singleton&quot;
+ * avalon.service type=&quot;org.apache.fulcrum.localization.SimpleLocalizationService&quot;
+ */
+public class SimpleLocalizationServiceImpl
+    extends AbstractLogEnabled
+    implements SimpleLocalizationService, Configurable, Initializable
+{
+    /** Key Prefix for our bundles */
+    private static final String BUNDLES = &quot;bundles&quot;;
+    
+    /**
+     * The value to pass to &lt;code&gt;MessageFormat&lt;/code&gt; if a
+     * &lt;code&gt;null&lt;/code&gt; reference is passed to &lt;code&gt;format()&lt;/code&gt;.
+     */
+<span class="fc" id="L86">    private static final Object[] NO_ARGS = new Object[0];</span>
+    
+    /**
+     * Bundle name keys a HashMap of the ResourceBundles in this
+     * service (which is in turn keyed by Locale).
+     */
+<span class="fc" id="L92">    private HashMap&lt;String, HashMap&lt;Locale, ResourceBundle&gt;&gt; bundles = null;</span>
+    
+    /**
+     * The list of default bundles to search.
+     */
+<span class="fc" id="L97">    private String[] bundleNames = null;</span>
+
+    /**
+     * The name of the default locale to use (includes language and
+     * country).
+     */
+<span class="fc" id="L103">    private Locale defaultLocale = null;</span>
+    
+    /** The name of the default language to use. */
+<span class="fc" id="L106">    private String defaultLanguage = null;</span>
+    
+    /** The name of the default country to use. */
+<span class="fc" id="L109">    private String defaultCountry = null;</span>
+
+    /**
+     * Creates a new instance.
+     */
+    public SimpleLocalizationServiceImpl()
+<span class="fc" id="L115">    {</span>
+<span class="fc" id="L116">        bundles = new HashMap&lt;String, HashMap&lt;Locale, ResourceBundle&gt;&gt;();</span>
+<span class="fc" id="L117">    }</span>
+
+    /**
+     * Avalon lifecycle method
+     * 
+     * {@link org.apache.avalon.framework.configuration.Configurable}
+     * 
+     * @param conf the configuration
+     * @throws ConfigurationException if failed to configure
+     */
+    @Override
+	public void configure(Configuration conf) throws ConfigurationException
+    {
+<span class="fc" id="L130">        Locale jvmDefault = Locale.getDefault();</span>
+<span class="fc" id="L131">        defaultLanguage =</span>
+            conf
+<span class="fc" id="L133">                .getAttribute(</span>
+                    &quot;locale-default-language&quot;,
+<span class="fc" id="L135">                    jvmDefault.getLanguage())</span>
+<span class="fc" id="L136">                .trim();</span>
+<span class="fc" id="L137">        defaultCountry =</span>
+            conf
+<span class="fc" id="L139">                .getAttribute(&quot;locale-default-country&quot;, jvmDefault.getCountry())</span>
+<span class="fc" id="L140">                .trim();</span>
+        // FIXME! need to add bundle names
+<span class="fc" id="L142">        getLogger().info(</span>
+            &quot;initialized lang=&quot;
+                + defaultLanguage
+                + &quot; country=&quot;
+                + defaultCountry);
+<span class="fc" id="L147">        final Configuration bundles = conf.getChild(BUNDLES, false);</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">        if (bundles != null)</span>
+        {
+<span class="fc" id="L150">            Configuration[] nameVal = bundles.getChildren();</span>
+<span class="fc" id="L151">            String bundleName[] = new String[nameVal.length];</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">            for (int i = 0; i &lt; nameVal.length; i++)</span>
+            {
+<span class="fc" id="L154">                String val = nameVal[i].getValue();</span>
+<span class="fc" id="L155">                getLogger().debug(&quot;Registered bundle &quot; + val);</span>
+<span class="fc" id="L156">                bundleName[i] = val;</span>
+            }
+<span class="fc" id="L158">            initBundleNames(bundleName);</span>
+        }
+<span class="fc" id="L160">    }</span>
+    
+    /**
+     * Called the first time the Service is used.
+     * 
+     * @throws Exception generic exception
+     */
+    @Override
+	public void initialize() throws Exception
+    {
+<span class="fc" id="L170">        defaultLocale = new Locale(defaultLanguage, defaultCountry);</span>
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">        if (getLogger().isInfoEnabled())</span>
+        {
+<span class="fc" id="L173">            getLogger().info(&quot;Localization Service is Initialized now..&quot;);</span>
+        }
+<span class="fc" id="L175">    }</span>
+    
+    /**
+     * Initialize list of default bundle names.
+     *
+     * @param intBundleNames set bundle names
+     */
+    protected void initBundleNames(String[] intBundleNames)
+    {
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">        if (intBundleNames == null)</span>
+<span class="nc" id="L185">            bundleNames = new String[0];</span>
+        else
+<span class="fc" id="L187">        	bundleNames = intBundleNames;</span>
+<span class="fc" id="L188">    }</span>
+    
+    /**
+     * Retrieves the default language (specified in the config file).
+     * 
+     * @return the default language
+     */
+    @Override
+	public String getDefaultLanguage()
+    {
+<span class="nc" id="L198">        return defaultLanguage;</span>
+    }
+    
+    /**
+     * Retrieves the default country (specified in the config file).
+     * 
+     * @return the default country
+     */
+    @Override
+	public String getDefaultCountry()
+    {
+<span class="nc" id="L209">        return defaultCountry;</span>
+    }
+    
+    /**
+     * Retrieves the default Locale (as created from default
+     * language and default country).
+     * 
+     * @return the default locale
+     */
+    @Override
+	public Locale getDefaultLocale()
+    {
+<span class="fc" id="L221">        return defaultLocale;</span>
+    }
+
+    /**
+     * {@link org.apache.fulcrum.localization.SimpleLocalizationService#getDefaultBundleName()}
+     * 
+     * @return the default bundle name
+     */
+    @Override
+	public String getDefaultBundleName()
+    {
+<span class="pc bpc" id="L232" title="1 of 2 branches missed.">        return (bundleNames.length &gt; 0 ? bundleNames[0] : &quot;&quot;);</span>
+    }
+    
+    /**
+     * {@link org.apache.fulcrum.localization.SimpleLocalizationService#getBundleNames()}
+     * 
+     * @return list of bundle names available
+     */
+    @Override
+	public String[] getBundleNames()
+    {
+<span class="nc" id="L243">        return bundleNames.clone();</span>
+    }
+    
+    /**
+     * @see org.apache.fulcrum.localization.SimpleLocalizationService#getBundle()
+     * 
+     * @return the default resource bundle
+     */
+    @Override
+	public ResourceBundle getBundle()
+    {
+<span class="nc" id="L254">        return getBundle(getDefaultBundleName(), (Locale) null);</span>
+    }
+    
+    /**
+     * @see org.apache.fulcrum.localization.SimpleLocalizationService#getBundle(java.lang.String)
+     * 
+     * @param bundleName the name of a bundle
+     * @return the resource bundle
+     */
+    @Override
+	public ResourceBundle getBundle(String bundleName)
+    {
+<span class="nc" id="L266">        return getBundle(bundleName, (Locale) null);</span>
+    }
+    
+    /**
+     * @see org.apache.fulcrum.localization.SimpleLocalizationService#getBundle(java.lang.String, java.util.Locale)
+     * 
+     * This method returns a ResourceBundle for the given bundle name
+     * and the given Locale.
+     *
+     * @param bundleName Name of bundle (or &lt;code&gt;null&lt;/code&gt; for the
+     * default bundle).
+     * @param locale The locale (or &lt;code&gt;null&lt;/code&gt; for the locale
+     * indicated by the default language and country).
+     * @return A localized ResourceBundle.
+     */
+    @Override
+	public ResourceBundle getBundle(String bundleName, Locale locale)
+    {
+        // Assure usable inputs.
+        bundleName =
+<span class="fc bfc" id="L286" title="All 2 branches covered.">            (bundleName == null ? getDefaultBundleName() : bundleName.trim());</span>
+<span class="pc bpc" id="L287" title="1 of 2 branches missed.">        if (locale == null)</span>
+        {
+<span class="nc" id="L289">            locale = getDefaultLocale();</span>
+        }
+        // Find/retrieve/cache bundle.
+<span class="fc" id="L292">        ResourceBundle rb = null;</span>
+<span class="fc" id="L293">        HashMap&lt;?, ?&gt; bundlesByLocale = (HashMap&lt;?, ?&gt;) bundles.get(bundleName);</span>
+<span class="fc bfc" id="L294" title="All 2 branches covered.">        if (bundlesByLocale != null)</span>
+        {
+            // Cache of bundles by locale for the named bundle exists.
+            // Check the cache for a bundle corresponding to locale.
+<span class="fc" id="L298">            rb = (ResourceBundle) bundlesByLocale.get(locale);</span>
+<span class="fc bfc" id="L299" title="All 2 branches covered.">            if (rb == null)</span>
+            {
+                // Not yet cached.
+<span class="fc" id="L302">                rb = cacheBundle(bundleName, locale);</span>
+            }
+        }
+        else
+        {
+<span class="fc" id="L307">            rb = cacheBundle(bundleName, locale);</span>
+        }
+<span class="fc" id="L309">        return rb;</span>
+    }
+    
+    /**
+     * Caches the named bundle for fast lookups.  This operation is
+     * relatively expensive in terms of memory use, but is optimized
+     * for run-time speed in the usual case.
+     *
+     * @param bundleName Name of bundle (or &lt;code&gt;null&lt;/code&gt; for the
+     * default bundle).
+     * @param locale The locale (or &lt;code&gt;null&lt;/code&gt; for the locale
+     * indicated by the default language and country).
+     * @throws MissingResourceException Bundle not found.
+     * @return a localized resource bundle
+     */
+    private synchronized ResourceBundle cacheBundle(
+        String bundleName,
+        Locale locale)
+        throws MissingResourceException
+    {
+<span class="fc" id="L329">        HashMap&lt;Locale, ResourceBundle&gt; bundlesByLocale = (HashMap&lt;Locale, ResourceBundle&gt;) bundles.get(bundleName);</span>
+        ResourceBundle rb =
+<span class="fc bfc" id="L331" title="All 2 branches covered.">            (bundlesByLocale == null</span>
+<span class="fc" id="L332">                ? null</span>
+<span class="fc" id="L333">                : (ResourceBundle) bundlesByLocale.get(locale));</span>
+<span class="pc bpc" id="L334" title="1 of 2 branches missed.">        if (rb == null)</span>
+        {
+            bundlesByLocale =
+<span class="fc bfc" id="L337" title="All 2 branches covered.">                (bundlesByLocale == null</span>
+<span class="fc" id="L338">                    ? new HashMap&lt;Locale, ResourceBundle&gt;(3)</span>
+<span class="fc" id="L339">                    : new HashMap&lt;Locale, ResourceBundle&gt;(bundlesByLocale));</span>
+            try
+            {
+<span class="fc" id="L342">                rb = ResourceBundle.getBundle(bundleName, locale);</span>
+            }
+<span class="fc" id="L344">            catch (MissingResourceException e)</span>
+            {
+<span class="fc" id="L346">                rb = findBundleByLocale(bundleName, locale, bundlesByLocale);</span>
+<span class="fc bfc" id="L347" title="All 2 branches covered.">                if (rb == null)</span>
+                {
+<span class="fc" id="L349">                    throw (MissingResourceException) e.fillInStackTrace();</span>
+                }
+<span class="fc" id="L351">            }</span>
+<span class="pc bpc" id="L352" title="1 of 2 branches missed.">            if (rb != null)</span>
+            {
+                // Cache bundle.
+<span class="fc" id="L355">                bundlesByLocale.put(rb.getLocale(), rb);</span>
+<span class="fc" id="L356">                HashMap&lt;String, HashMap&lt;Locale, ResourceBundle&gt;&gt; bundlesByName </span>
+                	= new HashMap&lt;String, HashMap&lt;Locale, ResourceBundle&gt;&gt;(bundles);
+<span class="fc" id="L358">                bundlesByName.put(bundleName, bundlesByLocale);</span>
+<span class="fc" id="L359">                this.bundles = bundlesByName;</span>
+            }
+        }
+<span class="fc" id="L362">        return rb;</span>
+    }
+    
+    /**
+     * &lt;p&gt;Retrieves the bundle most closely matching first against the
+     * supplied inputs, then against the defaults.&lt;/p&gt;
+     *
+     * &lt;p&gt;Use case: some clients send a HTTP Accept-Language header
+     * with a value of only the language to use
+     * (i.e. &quot;Accept-Language: en&quot;), and neglect to include a country.
+     * When there is no bundle for the requested language, this method
+     * can be called to try the default country (checking internally
+     * to assure the requested criteria matches the default to avoid
+     * disconnects between language and country).&lt;/p&gt;
+     *
+     * &lt;p&gt;Since we're really just guessing at possible bundles to use,
+     * we don't ever throw &lt;code&gt;MissingResourceException&lt;/code&gt;.&lt;/p&gt;
+     * 
+     * @param bundleName Name of bundle (or &lt;code&gt;null&lt;/code&gt; for the
+     * default bundle).
+     * @param locale The locale (or &lt;code&gt;null&lt;/code&gt; for the locale
+     * indicated by the default language and country).
+     * @param bundleByLocale map of locales and resource bundles
+     * @return a localized resource bundle
+     * 
+     */
+    private ResourceBundle findBundleByLocale(
+        String bundleName,
+        Locale locale,
+        Map&lt;Locale, ResourceBundle&gt; bundlesByLocale)
+    {
+<span class="fc" id="L393">        ResourceBundle rb = null;</span>
+<span class="fc bfc" id="L394" title="All 2 branches covered.">        if (StringUtils.isEmpty(locale.getCountry())</span>
+<span class="pc bpc" id="L395" title="1 of 2 branches missed.">            &amp;&amp; defaultLanguage.equals(locale.getLanguage()))</span>
+        {
+            /*
+             *            category.debug(&quot;Requested language '&quot; + locale.getLanguage() +
+             *                           &quot;' matches default: Attempting to guess bundle &quot; +
+             *                           &quot;using default country '&quot; + defaultCountry + '\'');
+             */
+<span class="nc" id="L402">            Locale withDefaultCountry =</span>
+<span class="nc" id="L403">                new Locale(locale.getLanguage(), defaultCountry);</span>
+<span class="nc" id="L404">            rb = (ResourceBundle) bundlesByLocale.get(withDefaultCountry);</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">            if (rb == null)</span>
+            {
+<span class="nc" id="L407">                rb = getBundleIgnoreException(bundleName, withDefaultCountry);</span>
+            }
+<span class="nc" id="L409">        }</span>
+<span class="fc" id="L410">        else if (</span>
+<span class="pc bpc" id="L411" title="1 of 2 branches missed.">            StringUtils.isEmpty(locale.getLanguage())</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">                &amp;&amp; defaultCountry.equals(locale.getCountry()))</span>
+        {
+<span class="nc" id="L414">            Locale withDefaultLanguage =</span>
+<span class="nc" id="L415">                new Locale(defaultLanguage, locale.getCountry());</span>
+<span class="nc" id="L416">            rb = (ResourceBundle) bundlesByLocale.get(withDefaultLanguage);</span>
+<span class="nc bnc" id="L417" title="All 2 branches missed.">            if (rb == null)</span>
+            {
+<span class="nc" id="L419">                rb = getBundleIgnoreException(bundleName, withDefaultLanguage);</span>
+            }
+        }
+        
+<span class="pc bpc" id="L423" title="1 of 4 branches missed.">        if (rb == null &amp;&amp; !defaultLocale.equals(locale))</span>
+        {
+<span class="fc" id="L425">            rb = getBundleIgnoreException(bundleName, defaultLocale);</span>
+        }
+<span class="fc" id="L427">        return rb;</span>
+    }
+    
+    /**
+     * Retrieves the bundle using the
+     * &lt;code&gt;ResourceBundle.getBundle(String, Locale)&lt;/code&gt; method,
+     * returning &lt;code&gt;null&lt;/code&gt; instead of throwing
+     * &lt;code&gt;MissingResourceException&lt;/code&gt;.
+     * 
+     * @param bundleName Name of bundle (or &lt;code&gt;null&lt;/code&gt; for the
+     * default bundle).
+     * @param locale The locale (or &lt;code&gt;null&lt;/code&gt; for the locale
+     * indicated by the default language and country).
+     */
+    private final ResourceBundle getBundleIgnoreException(
+        String bundleName,
+        Locale locale)
+    {
+        try
+        {
+<span class="fc" id="L447">            return ResourceBundle.getBundle(bundleName, locale);</span>
+        }
+<span class="fc" id="L449">        catch (MissingResourceException ignored)</span>
+        {
+<span class="fc" id="L451">            return null;</span>
+        }
+    }
+    
+    /**
+     * This method sets the name of the first bundle in the search
+     * list (the &quot;default&quot; bundle).
+     *
+     * @param defaultBundle Name of default bundle.
+     */
+    @Override
+	public void setBundle(String defaultBundle)
+    {
+<span class="nc bnc" id="L464" title="All 2 branches missed.">        if (bundleNames.length &gt; 0)</span>
+        {
+<span class="nc" id="L466">            bundleNames[0] = defaultBundle;</span>
+        }
+        else
+        {
+<span class="nc" id="L470">            synchronized (this)</span>
+            {
+<span class="nc bnc" id="L472" title="All 2 branches missed.">                if (bundleNames.length &lt;= 0)</span>
+                {
+<span class="nc" id="L474">                    bundleNames = new String[] { defaultBundle };</span>
+                }
+<span class="nc" id="L476">            }</span>
+        }
+<span class="nc" id="L478">    }</span>
+    
+    /**
+     * 
+     * {@link org.apache.fulcrum.localization.SimpleLocalizationService#getString(String, Locale, String)}
+     * @throws MissingResourceException Specified key cannot be matched.
+     */
+    @Override
+	public String getString(String bundleName, Locale locale, String key)
+      throws MissingResourceException
+    {
+<span class="fc" id="L489">        String value = null;</span>
+<span class="fc bfc" id="L490" title="All 2 branches covered.">        if (locale == null)</span>
+        {
+<span class="fc" id="L492">            locale = getDefaultLocale();</span>
+        }
+        // Look for text in requested bundle.
+<span class="fc" id="L495">        ResourceBundle rb = getBundle(bundleName, locale);</span>
+<span class="fc" id="L496">        value = getStringOrNull(rb, key);</span>
+        // Look for text in list of default bundles.
+<span class="pc bpc" id="L498" title="1 of 4 branches missed.">        if (value == null &amp;&amp; bundleNames.length &gt; 0)</span>
+        {
+            String name;
+<span class="pc bpc" id="L501" title="1 of 2 branches missed.">            for (int i = 0; i &lt; bundleNames.length; i++)</span>
+            {
+<span class="fc" id="L503">                name = bundleNames[i];</span>
+                //System.out.println(&quot;getString(): name=&quot; + name +
+                //                   &quot;, locale=&quot; + locale + &quot;, i=&quot; + i);
+<span class="pc bpc" id="L506" title="1 of 2 branches missed.">                if (!name.equals(bundleName))</span>
+                {
+<span class="fc" id="L508">                    rb = getBundle(name, locale);</span>
+<span class="fc" id="L509">                    value = getStringOrNull(rb, key);</span>
+<span class="fc bfc" id="L510" title="All 2 branches covered.">                    if (value != null)</span>
+                    {
+<span class="fc" id="L512">                        locale = rb.getLocale();</span>
+<span class="fc" id="L513">                        break;</span>
+                    }
+                }
+            }
+        }
+<span class="pc bpc" id="L518" title="1 of 2 branches missed.">        if (value == null)</span>
+        {
+<span class="nc" id="L520">            String loc = locale.toString();</span>
+<span class="nc" id="L521">            String mesg =</span>
+                LocalizationService.SERVICE_NAME
+                    + &quot; noticed missing resource: &quot;
+                    + &quot;bundleName=&quot;
+                    + bundleName
+                    + &quot;, locale=&quot;
+                    + loc
+                    + &quot;, key=&quot;
+                    + key;
+<span class="nc" id="L530">            getLogger().debug(mesg);</span>
+            // Text not found in requested or default bundles.
+<span class="nc" id="L532">            throw new MissingResourceException(mesg, bundleName, key);</span>
+        }
+<span class="fc" id="L534">        return value;</span>
+    }
+    
+    /**
+     * Returns the value for the key in the default bundle and the default locale.
+     * 
+     * @param key The key to retrieve the value for.
+     * @return The value mapped to the key.
+     */
+    @Override
+	public String getString(String key)
+    {
+<span class="fc" id="L546">        return getString(getDefaultBundleName(), getDefaultLocale(), key);</span>
+    }
+    
+    
+    /**
+     * Gets localized text from a bundle if it's there.  Otherwise,
+     * returns &lt;code&gt;null&lt;/code&gt; (ignoring a possible
+     * &lt;code&gt;MissingResourceException&lt;/code&gt;).
+     * 
+     * @param rb resource bundle 
+     * @param key The key to retrieve the value for.
+     * @return name of resource
+     */
+    protected final String getStringOrNull(ResourceBundle rb, String key)
+    {
+<span class="pc bpc" id="L561" title="1 of 2 branches missed.">        if (rb != null)</span>
+        {
+            try
+            {
+<span class="fc" id="L565">                return rb.getString(key);</span>
+            }
+<span class="fc" id="L567">            catch (MissingResourceException ignored)</span>
+            {
+                // ignore
+            }
+        }
+<span class="fc" id="L572">        return null;</span>
+    }
+    
+    /**
+     * {@link org.apache.fulcrum.localization.SimpleLocalizationService#format(String, Locale, String, Object)}
+     * @param bundleName the bundle name
+     * @param locale locale
+     * @param key key to lookup
+     * @param arg1 bundle arguments
+     */
+    @Override
+	public String format(
+        String bundleName,
+        Locale locale,
+        String key,
+        Object arg1)
+    {
+<span class="nc" id="L589">        return format(bundleName, locale, key, new Object[] { arg1 });</span>
+    }
+    
+    /* (non-Javadoc)
+     * @see org.apache.fulcrum.localization.SimpleLocalizationService#format(java.lang.String, java.util.Locale, java.lang.String, java.lang.Object, java.lang.Object)
+     */
+    @Override
+	public String format(
+        String bundleName,
+        Locale locale,
+        String key,
+        Object arg1,
+        Object arg2)
+    {
+<span class="nc" id="L603">        return format(bundleName, locale, key, new Object[] { arg1, arg2 });</span>
+    }
+    
+    /**
+     * Looks up the value for &lt;code&gt;key&lt;/code&gt; in the
+     * &lt;code&gt;ResourceBundle&lt;/code&gt; referenced by
+     * &lt;code&gt;bundleName&lt;/code&gt;, then formats that value for the
+     * specified &lt;code&gt;Locale&lt;/code&gt; using &lt;code&gt;args&lt;/code&gt;.
+     * 
+     * If &lt;code&gt;locale&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;, {@link #getDefaultLocale()} will be checked.
+     * If &lt;code&gt;bundleName&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;, {@link #getDefaultBundleName()} will be checked (cft. {@link #getBundle(String, Locale)}.
+     *
+     * @return Localized, formatted text identified by
+     * &lt;code&gt;key&lt;/code&gt;.
+     */
+    @Override
+	public String format(
+        String bundleName,
+        Locale locale,
+        String key,
+        Object[] args)
+    {
+        // When formatting Date objects and such, MessageFormat
+        // cannot have a null Locale.
+<span class="nc bnc" id="L627" title="All 2 branches missed.">        Locale formatLocale = (locale == null) ? getDefaultLocale() : locale; </span>
+<span class="nc" id="L628">        String value = getString(bundleName, locale, key);</span>
+        
+<span class="nc bnc" id="L630" title="All 2 branches missed.">        Object[] formatArgs = (args == null) ? NO_ARGS : args;</span>
+        
+<span class="nc" id="L632">        MessageFormat messageFormat = new MessageFormat(value, formatLocale);</span>
+<span class="nc" id="L633">        return messageFormat.format(formatArgs);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

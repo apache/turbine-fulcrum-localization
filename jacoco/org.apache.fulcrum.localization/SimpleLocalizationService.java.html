@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SimpleLocalizationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fulcrum Localization</a> &gt; <a href="index.source.html" class="el_package">org.apache.fulcrum.localization</a> &gt; <span class="el_source">SimpleLocalizationService.java</span></div><h1>SimpleLocalizationService.java</h1><pre class="source lang-java linenums">package org.apache.fulcrum.localization;
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+
+/**
+ * &lt;p&gt;
+ * Provides localization functionality using the interface provided
+ * by &lt;code&gt;ResourceBundle&lt;/code&gt;, plus leverages a &quot;search path&quot;
+ * style traversal of the &lt;code&gt;ResourceBundle&lt;/code&gt; objects named by
+ * the &lt;code&gt;locale.default.bundles&lt;/code&gt; to discover a value for a
+ * given key.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * It is suggested that one handle
+ * &lt;a href=&quot;http://www.math.fu-berlin.de/~rene/www/java/tutorial/i18n/message/messageFormat.html&quot;&gt;dealing with concatenated messages&lt;/a&gt;
+ * using &lt;code&gt;MessageFormat&lt;/code&gt; and properties files.
+ * &lt;/p&gt;
+ *
+ * @author &lt;a href=&quot;mailto:jon@latchkey.com&quot;&gt;Jon S. Stevens&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:dlr@finemaltcoding.com&quot;&gt;Daniel Rall&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:leonardr@collab.net&quot;&gt;Leonard Richardson&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:mcconnell@apache.org&quot;&gt;Stephen McConnell&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:tv@apache.org&quot;&gt;Thomas Vandahl&lt;/a&gt;
+ * @version $Id: LocalizationService.java 535465 2007-05-05 06:58:06Z tv $
+ */
+public interface SimpleLocalizationService
+{
+<span class="nc" id="L51">    String ROLE = SimpleLocalizationService.class.getName();</span>
+<span class="nc" id="L52">    String SERVICE_NAME = ROLE;</span>
+
+    /**
+     * Retrieves the default language (as specified in the config
+     * file).
+     * @return the default language
+     */
+    String getDefaultLanguage();
+
+    /**
+     * Retrieves the default country (as specified in the config
+     * file).
+     * 
+     * @return the default country
+     */
+    String getDefaultCountry();
+
+    /**
+     * Retrieves the default Locale (as created from default
+     * language and default country).
+     * 
+     * @return the default locale
+     */
+    Locale getDefaultLocale();
+
+    /**
+     * Retrieves the name of the default bundle (as specified in the
+     * config file), or the first in the list if there are more than
+     * one.
+     * 
+     * @return the default bundle name
+     */
+    String getDefaultBundleName();
+
+    /**
+     * Retrieves the list of names of bundles to search by default for
+     * &lt;code&gt;ResourceBundle&lt;/code&gt; keys (as specified in the config
+     * file).
+     *
+     * @return The list of configured bundle names.
+     */
+    String[] getBundleNames();
+
+    /**
+     * Convenience method to get the default &lt;code&gt;ResourceBundle&lt;/code&gt;.
+     *
+     * @return A localized &lt;code&gt;ResourceBundle&lt;/code&gt;.
+     */
+    ResourceBundle getBundle();
+
+    /**
+     * Returns a ResourceBundle given the bundle name and the default
+     * locale information supplied by the configuration.
+     *
+     * @param bundleName Name of bundle.
+     * @return A localized ResourceBundle.
+     */
+    ResourceBundle getBundle(String bundleName);
+
+    /**
+     * Convenience method to get a ResourceBundle based on name and
+     * Locale.
+     *
+     * @param bundleName Name of bundle.
+     * @param locale A Locale.
+     * @return A localized ResourceBundle.
+     */
+    ResourceBundle getBundle(String bundleName, Locale locale);
+
+    /**
+     * Tries very hard to return a value, looking first in the
+     * specified bundle, then searching list of default bundles
+     * (giving precedence to earlier bundles over later bundles).
+     *
+     * @param bundleName Name of the bundle to look in first.
+     * @param locale Locale to get text for.
+     * @param key Name of the text to retrieve.
+     * @return Localized text.
+     * @throws MissingResourceException if the resource is not found
+     */
+    String getString(String bundleName, Locale locale, String key) throws MissingResourceException;
+    
+    /**
+     * Returns the value for the key in the default bundle and the default locale.
+     * 
+     * @param key The key to retrieve the value for.
+     * @return The value mapped to the key.
+     */
+    String getString(String key);
+
+    /**
+     * This method sets the name of the defaultBundle.
+     *
+     * @param defaultBundle Name of default bundle.
+     */
+    void setBundle(String defaultBundle);
+
+    /**
+     * Formats a localized value using the provided object.
+     *
+     * @param bundleName The bundle in which to look for the localizable text.
+     * @param locale The locale for which to format the text.
+     * @param key The identifier for the localized text to retrieve,
+     * @param arg1 The object to use as {0} when formatting the localized text.
+     * @return Formatted localized text.
+     * @see #format(String, Locale, String, Object[])
+     */
+    String format(String bundleName, Locale locale,
+                         String key, Object arg1);
+
+    /**
+     * Formats a localized value using the provided objects.
+     *
+     * @param bundleName The bundle in which to look for the localizable text.
+     * @param locale The locale for which to format the text.
+     * @param key The identifier for the localized text to retrieve,
+     * @param arg1 The object to use as {0} when formatting the localized text.
+     * @param arg2 The object to use as {1} when formatting the localized text.
+     * 
+     * @return Formatted localized text.
+     * 
+     * @see #format(String, Locale, String, Object[])
+     */
+    String format(String bundleName, Locale locale,
+                         String key, Object arg1, Object arg2);
+
+    /**
+     * Formats a localized value using the provided objects.
+     *
+     * @param bundleName The bundle in which to look for the localizable text.
+     * @param locale The locale for which to format the text.
+     * @param key The identifier for the localized text to retrieve,
+     * @param args The objects to use as {0}, {1}, etc. when
+     *             formatting the localized text.
+     * @return Formatted localized text.
+     */
+    String format(String bundleName, Locale locale,
+                         String key, Object[] args);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

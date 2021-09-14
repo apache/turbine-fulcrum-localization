@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultLocalizationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fulcrum Localization</a> &gt; <a href="index.source.html" class="el_package">org.apache.fulcrum.localization</a> &gt; <span class="el_source">DefaultLocalizationService.java</span></div><h1>DefaultLocalizationService.java</h1><pre class="source lang-java linenums">package org.apache.fulcrum.localization;
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+
+/**
+ * &lt;p&gt;
+ * This class is the single point of access to all localization
+ * resources.  It caches different ResourceBundles for different
+ * Locales.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;Usage example:&lt;/p&gt;
+ *
+ * &lt;pre&gt;
+ * &lt;code&gt;
+ * LocalizationService ls = (LocalizationService) TurbineServices
+ *     .getInstance().getService(LocalizationService.SERVICE_NAME);
+ * &lt;/code&gt;
+ * &lt;/pre&gt;
+ *
+ * &lt;p&gt;
+ * Then call {@link #getString(String, Locale, String)}, or one of
+ * four methods to retrieve a ResourceBundle:
+ * &lt;/p&gt;
+ *
+ * &lt;ul&gt;
+ * &lt;li&gt;getBundle(&quot;MyBundleName&quot;)&lt;/li&gt;
+ * &lt;li&gt;getBundle(&quot;MyBundleName&quot;, httpAcceptLanguageHeader)&lt;/li&gt;
+ * &lt;li&gt;etBundle(&quot;MyBundleName&quot;, HttpServletRequest)&lt;/li&gt;
+ * &lt;li&gt;getBundle(&quot;MyBundleName&quot;, Locale)&lt;/li&gt;
+ * &lt;li&gt;etc.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * @author &lt;a href=&quot;mailto:jm@mediaphil.de&quot;&gt;Jonas Maurus&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:jon@latchkey.com&quot;&gt;Jon S. Stevens&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:novalidemail@foo.com&quot;&gt;Frank Y. Kim&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:dlr@finemaltcoding.com&quot;&gt;Daniel Rall&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:leonardr@collab.net&quot;&gt;Leonard Richardson&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:mcconnell@apache.org&quot;&gt;Stephen McConnell&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:tv@apache.org&quot;&gt;Thomas Vandahl&lt;/a&gt;
+ * @version $Id$
+ * avalon.component name=&quot;localization&quot; lifestyle=&quot;singleton&quot;
+ * avalon.service type=&quot;org.apache.fulcrum.localization.LocalizationService&quot;
+ */
+public class DefaultLocalizationService
+    extends SimpleLocalizationServiceImpl
+    implements LocalizationService
+{
+    /**
+     * Creates a new instance.
+     */
+    public DefaultLocalizationService()
+    {
+<span class="fc" id="L78">        super();</span>
+<span class="fc" id="L79">    }</span>
+
+    /**
+     * This method returns a ResourceBundle given the bundle name and
+     * the Locale information supplied in the HTTP &quot;Accept-Language&quot;
+     * header.
+     * 
+     * @see org.apache.fulcrum.localization.LocalizationService#getBundle(java.lang.String, java.lang.String)
+     *
+     * @param bundleName Name of bundle.
+     * @param languageHeader A String with the language header.
+     * @return A localized ResourceBundle.
+     */
+    public ResourceBundle getBundle(String bundleName, String languageHeader)
+    {
+<span class="nc" id="L94">        return getBundle(bundleName, getLocale(languageHeader));</span>
+    }
+
+    /**
+     * This method returns a ResourceBundle given the Locale
+     * information supplied in the HTTP &quot;Accept-Language&quot; header which
+     * is stored in HttpServletRequest.
+     *
+     * @param req HttpServletRequest.
+     * @return A localized ResourceBundle.
+     */
+    public ResourceBundle getBundle(HttpServletRequest req)
+    {
+<span class="nc" id="L107">        return getBundle(getDefaultBundleName(), getLocale(req));</span>
+    }
+
+    /**
+     * @see org.apache.fulcrum.localization.LocalizationService#getBundle(java.lang.String, javax.servlet.http.HttpServletRequest)
+     * 
+     * This method returns a ResourceBundle given the bundle name and
+     * the Locale information supplied in the HTTP &quot;Accept-Language&quot;
+     * header which is stored in HttpServletRequest.
+     *
+     * @param bundleName Name of the bundle to use if the request's
+     * locale cannot be resolved.
+     * @param req HttpServletRequest.
+     * @return A localized ResourceBundle.
+     */
+    public ResourceBundle getBundle(String bundleName, HttpServletRequest req)
+    {
+<span class="nc" id="L124">        return getBundle(bundleName, getLocale(req));</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.fulcrum.localization.LocalizationService#getLocale(javax.servlet.http.HttpServletRequest)
+     */
+    public Locale getLocale(HttpServletRequest req)
+    {
+<span class="nc" id="L132">        return getLocale(req.getHeader(ACCEPT_LANGUAGE));</span>
+        // (JSS) Backed out this change because Tomcat seems to be returning
+        //       the wrong result and things just are not working.
+        //        Locale l = req.getLocale();
+        //        return (l != null ? l : getLocale(req.getHeader(ACCEPT_LANGUAGE)));
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.fulcrum.localization.LocalizationService#getLocale(java.lang.String)
+     */
+    public Locale getLocale(String header)
+    {
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (StringUtils.isNotEmpty(header))</span>
+        {
+<span class="nc" id="L146">            LocaleTokenizer tok = new LocaleTokenizer(header);</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">            if (tok.hasNext())</span>
+            {
+<span class="nc" id="L149">                return (Locale) tok.next();</span>
+            }
+        }
+        
+        // Couldn't parse locale.
+<span class="nc" id="L154">        return getDefaultLocale();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
