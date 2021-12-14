@@ -32,18 +32,13 @@
   <description>Fulcrum Localization Service</description>
   <url>http://turbine.apache.org/fulcrum/fulcrum-localization</url>
 
-  <!-- Required for staging to work -->
-    <!-- distributionManagement id and url defined in parent -->
-    <distributionManagement>
-      <site>
-          <name>Fulcrum Localization Website</name>
-        </site>
-   </distributionManagement>
 
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</developerConnection>
     <url>https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</url>
+    <url>https://github.com/apache/turbine-fulcrum-localization/tree/${project.scm.tag}</url>
+    <tag>HEAD</tag>
   </scm>
 
   <developers>
@@ -124,7 +119,6 @@
     <turbine.site.path>turbine-fulcrum-localization</turbine.site.path>
     <turbine.scmPubCheckoutDirectory>${turbine.site.cache}/fulcrum/localization</turbine.scmPubCheckoutDirectory>
     <turbine.site.cache>${project.build.directory}/turbine-sites</turbine.site.cache>
-    <siteContent.path>${project.build.directory}/staging</siteContent.path><!-- default stagingSiteURL -->
   </properties>  
 	
 </project>

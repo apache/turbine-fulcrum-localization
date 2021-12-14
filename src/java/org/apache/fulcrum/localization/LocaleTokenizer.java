@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.StringTokenizer;
 
 /**
@@ -52,12 +53,12 @@ public class LocaleTokenizer
      * The default quality value for an <code>AcceptLanguage</code>
      * object.
      */
-    protected static final Float DEFAULT_QUALITY = new Float(1.0f);
+    protected static final Float DEFAULT_QUALITY = 1.0f;
 
     /**
      * The parsed locales.
      */
-    private ArrayList<AcceptLanguage> locales = new ArrayList<AcceptLanguage>(3);
+    private ArrayList<AcceptLanguage> locales = new ArrayList<>(3);
 
     /**
      * Parses the <code>Accept-Language</code> header.
@@ -113,7 +114,7 @@ public class LocaleTokenizer
         }
 
         // Sort by quality in descending order.
-        Collections.sort(locales, Collections.reverseOrder());
+        locales.sort(Collections.reverseOrder());
     }
 
     /**
@@ -137,12 +138,13 @@ public class LocaleTokenizer
         {
             throw new NoSuchElementException();
         }
-        return ((AcceptLanguage) locales.remove(0)).locale;
+        return (locales.remove(0)).locale;
     }
 
     /**
      * Not implemented.
      */
+    @Override
     public final void remove()
     {
         throw new UnsupportedOperationException(getClass().getName() +
@@ -180,6 +182,19 @@ public class LocaleTokenizer
 				throw new NullPointerException("The object to compare is not the correct type");
 			}
 				
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof AcceptLanguage)) return false;
+            AcceptLanguage that = (AcceptLanguage) o;
+            return quality.equals(that.quality);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(locale, quality);
         }
     }
 }
