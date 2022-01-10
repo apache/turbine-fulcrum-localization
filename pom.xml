@@ -19,7 +19,7 @@
   <parent>
     <artifactId>turbine-parent</artifactId>
     <groupId>org.apache.turbine</groupId>
-    <version>9</version>
+    <version>11</version>
     <relativePath /><!-- ignore default value -->
   </parent>
 
@@ -36,7 +36,6 @@
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</developerConnection>
-    <url>https://gitbox.apache.org/repos/asf/turbine-fulcrum-localization.git</url>
     <url>https://github.com/apache/turbine-fulcrum-localization/tree/${project.scm.tag}</url>
     <tag>HEAD</tag>
   </scm>
