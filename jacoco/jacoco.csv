@@ -1,7 +1,7 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-Fulcrum Localization,org.apache.fulcrum.localization,SimpleLocalizationServiceImpl,200,372,29,39,37,99,31,26,9,14
-Fulcrum Localization,org.apache.fulcrum.localization,LocaleTokenizer.AcceptLanguage,10,20,2,2,2,6,2,2,0,2
+Fulcrum Localization,org.apache.fulcrum.localization,SimpleLocalizationServiceImpl,204,368,30,38,38,96,32,25,9,14
 Fulcrum Localization,org.apache.fulcrum.localization,SimpleLocalizationService,6,0,0,0,2,0,1,0,1,0
+Fulcrum Localization,org.apache.fulcrum.localization,LocaleTokenizer.AcceptLanguage,43,20,6,2,7,6,6,2,2,2
 Fulcrum Localization,org.apache.fulcrum.localization,DefaultLocalizationService,46,3,4,0,9,2,7,1,5,1
-Fulcrum Localization,org.apache.fulcrum.localization,LocaleTokenizer,27,117,4,8,4,25,5,6,2,3
+Fulcrum Localization,org.apache.fulcrum.localization,LocaleTokenizer,27,115,4,8,4,25,5,6,2,3
 Fulcrum Localization,org.apache.fulcrum.localization,LocalizationService,0,6,0,0,0,2,0,1,0,1

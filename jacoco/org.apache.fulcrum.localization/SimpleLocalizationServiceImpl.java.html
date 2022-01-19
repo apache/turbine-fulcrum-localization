@@ -282,8 +282,8 @@ public class SimpleLocalizationServiceImpl
 	public ResourceBundle getBundle(String bundleName, Locale locale)
     {
         // Assure usable inputs.
-        bundleName =
-<span class="fc bfc" id="L286" title="All 2 branches covered.">            (bundleName == null ? getDefaultBundleName() : bundleName.trim());</span>
+<span class="fc bfc" id="L285" title="All 2 branches covered.">        bundleName =</span>
+<span class="fc" id="L286">            (bundleName == null ? getDefaultBundleName() : bundleName.trim());</span>
 <span class="pc bpc" id="L287" title="1 of 2 branches missed.">        if (locale == null)</span>
         {
 <span class="nc" id="L289">            locale = getDefaultLocale();</span>
@@ -327,16 +327,16 @@ public class SimpleLocalizationServiceImpl
         throws MissingResourceException
     {
 <span class="fc" id="L329">        HashMap&lt;Locale, ResourceBundle&gt; bundlesByLocale = (HashMap&lt;Locale, ResourceBundle&gt;) bundles.get(bundleName);</span>
-        ResourceBundle rb =
-<span class="fc bfc" id="L331" title="All 2 branches covered.">            (bundlesByLocale == null</span>
-<span class="fc" id="L332">                ? null</span>
+<span class="fc bfc" id="L330" title="All 2 branches covered.">        ResourceBundle rb =</span>
+            (bundlesByLocale == null
+                ? null
 <span class="fc" id="L333">                : (ResourceBundle) bundlesByLocale.get(locale));</span>
 <span class="pc bpc" id="L334" title="1 of 2 branches missed.">        if (rb == null)</span>
         {
-            bundlesByLocale =
-<span class="fc bfc" id="L337" title="All 2 branches covered.">                (bundlesByLocale == null</span>
-<span class="fc" id="L338">                    ? new HashMap&lt;Locale, ResourceBundle&gt;(3)</span>
-<span class="fc" id="L339">                    : new HashMap&lt;Locale, ResourceBundle&gt;(bundlesByLocale));</span>
+<span class="fc bfc" id="L336" title="All 2 branches covered.">            bundlesByLocale =</span>
+                (bundlesByLocale == null
+                    ? new HashMap&lt;Locale, ResourceBundle&gt;(3)
+                    : new HashMap&lt;Locale, ResourceBundle&gt;(bundlesByLocale));
             try
             {
 <span class="fc" id="L342">                rb = ResourceBundle.getBundle(bundleName, locale);</span>
@@ -344,7 +344,7 @@ public class SimpleLocalizationServiceImpl
 <span class="fc" id="L344">            catch (MissingResourceException e)</span>
             {
 <span class="fc" id="L346">                rb = findBundleByLocale(bundleName, locale, bundlesByLocale);</span>
-<span class="fc bfc" id="L347" title="All 2 branches covered.">                if (rb == null)</span>
+<span class="pc bpc" id="L347" title="1 of 2 branches missed.">                if (rb == null)</span>
                 {
 <span class="fc" id="L349">                    throw (MissingResourceException) e.fillInStackTrace();</span>
                 }
@@ -444,7 +444,7 @@ public class SimpleLocalizationServiceImpl
     {
         try
         {
-<span class="fc" id="L447">            return ResourceBundle.getBundle(bundleName, locale);</span>
+<span class="nc" id="L447">            return ResourceBundle.getBundle(bundleName, locale);</span>
         }
 <span class="fc" id="L449">        catch (MissingResourceException ignored)</span>
         {
@@ -633,4 +633,4 @@ public class SimpleLocalizationServiceImpl
 <span class="nc" id="L633">        return messageFormat.format(formatArgs);</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
