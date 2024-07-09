@@ -22,7 +22,7 @@ package org.apache.fulcrum.localization;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -108,7 +108,7 @@ public class DefaultLocalizationService
     }
 
     /**
-     * @see org.apache.fulcrum.localization.LocalizationService#getBundle(java.lang.String, javax.servlet.http.HttpServletRequest)
+     * @see org.apache.fulcrum.localization.LocalizationService#getBundle(java.lang.String, jakarta.servlet.http.HttpServletRequest)
      * 
      * This method returns a ResourceBundle given the bundle name and
      * the Locale information supplied in the HTTP "Accept-Language"
@@ -125,7 +125,7 @@ public class DefaultLocalizationService
     }
 
     /* (non-Javadoc)
-     * @see org.apache.fulcrum.localization.LocalizationService#getLocale(javax.servlet.http.HttpServletRequest)
+     * @see org.apache.fulcrum.localization.LocalizationService#getLocale(jakarta.servlet.http.HttpServletRequest)
      */
     public Locale getLocale(HttpServletRequest req)
     {
